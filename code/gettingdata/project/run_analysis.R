@@ -1,7 +1,7 @@
 
 
 library(data.table)
-
+library(reshape2)
 ##I created this function because I was not satisfied by the behaviour of replace() with sapply().
 ## I wanted  a function that replaced numerical values by a corresponding character without worrying about dimensions
 ## of the arguments I passed in the function
@@ -23,7 +23,7 @@ variables <- read.table("features.txt") ##will be used later to rename the varia
 variables<-variables$V2
 variables<-as.character(variables)
 
---------------## a) for train 
+#-------------- a) for train 
 
 x_train <- as.data.table(read.table("train/X_train.txt",colClasses = "numeric",nrows = 7352, comment.char=""))
 y_train <- read.table("train/y_train.txt")
@@ -33,7 +33,7 @@ subjects_train <- as.data.table(read.table("train/subject_train.txt"))
 ## to change the values of the vector
 y_train <- sapply(y_train[,1],replace_multiple) 
 
---------------## b) for test
+#-------------- b) for test
 
 x_test <- as.data.table(read.table("test/X_test.txt",colClasses = "numeric",nrows = 2947, comment.char=""))
 y_test <- read.table("test/y_test.txt")
@@ -85,11 +85,13 @@ for (k in 1:length(unique(mergedDT$Patient_number)))
 {
         patient<-mergedDT[mergedDT$Patient_number==k,]
         
-        for (l in unique(mergedDT$Activity_performed))
+        for (l in unique(mergedDT$Activity))
         {
-                activity <- patient[patient$Activity_performed==l,]
-                averageDT <- rbind(averageDT,mapply(mean,activity,SIMPLIFY=FALSE),use.names=FALSE)
+                activity <- patient[patient$Activity==l,]
+                newrow <- mapply(mean,activity,SIMPLIFY=FALSE)
+                newrow[[2]]<-l
+                averageDT <- rbind(averageDT,newrow,use.names=FALSE)
         }
 }
 
-write.table(averageDT, row.name=FALSE)
+write.table(averageDT, row.names=FALSE,file="Output step 5.txt")
