@@ -1,0 +1,80 @@
+This codebook purpose is to explain the different variables, data and operations I used to obtain my tidy dataset. It is organized in the following parts: 
+        1) I will present the raw data I used;
+        2) I will explain the different steps I used to obtain my tidy data; and
+        3) I will define the variables I used to achieve this transformation.
+
+
+
+1) The raw data was obtained from this link:
+
+https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip
+
+After unzipping it, there is a main folder called "UCI HAR Dataset" which contains in turn two folders (test and train) and four .txt files (activity_labels, features, features_info and README).Here are the files I used:
+        
+        a) activity_labels.txt and features.txt;
+        b) In the test folder: X_test.txt, y_test.txt and subjet_test.txt
+        c) in the train folder: X_train.txt, y_train.txt and subject_train.txt
+
+
+2) The accomplishement on the task at hand was performed in four steps:
+
+        a) Fetching the data and organizing it a bit
+
+                - To import the data I used read.table() while indicating colClasses, nrows
+                and comment char when necessary to improve performances.
+                - For the y_test/train files, I also immediately replaced the numerical
+                values by their activity equivalents. In order to do so I used the sapply()
+                together with replace_multiple () (see Readme file).
+
+        b) Merging the files into one
+
+                - First I merged the train and test data individually using cbind(). I
+                started with subject_test/train and y_test/train as I wanted those to be
+                the first two collumns of my tidy dataset.
+                - Then I used rbind() to merge the two datatables. Note that I used 
+                use.names=FALSE. I used this as I wanted my two data tables to be on 
+                top of the other as I knew that the order of the collumns in both data tables
+                corresponded to the same variables.
+                - And I changed the variables names with the ones present in the features.txt files using
+                setnames().
+
+        c) Creating the first dataset: extracting mean and st.dev variables
+
+                - For this step I noticed that there is a periodicity among the mean and std.dev variables.
+                If you consider the features.txt file you will see that the variable containing 
+                mean and st.dev appear with the following pattern:
+
+                                        i*40 + j     with 0<i<13 and 1<j<6
+
+                - Consequently, I used a double for loop. The first one with i running
+                between 0 and 13 and the second one with j running between 3 and 8. This change is 
+                necessary because by merging all the files together I obtained data tables not with 561 
+                variables but 563. Having j running between 3 and 8 takes this into account.
+                - Each run gave me a new collumn that I added to a new dataset using cbind
+
+        d) Creating the second dataset: calculating the average of each variable for each
+           activity and each subject.
+                
+                - I also used a double loop which objective was to obtain data tables corresponding 
+                to a particular patient (loop one) performing a particular activity (loop 2). 
+                - Now I wanted to obtain the average of each variable so I used mapply() with mean().
+                - Each run gave me a new row that I then added to the new data set using rbind().
+                I used SIMPLIFY=FALSE in order to keep the data in its actual form: I dont want a list.
+
+
+3) Here follows the list of variables by order of apparition in the R script
+
+        variables               character vector containing the names of the variables. It is extracted from features.txt
+        x_train/test            data table containing the information present in X_train/test.txt
+        y_train/test            character vector containing the information present in y_train/test.txt and activity_labels.txt
+        subjects_train/test     data table containing the information present in subject_train/test.txt
+
+        mergedDT_train/test     data table resulting from the merging of the three following variables (in that order);
+                                subjects_train/test, y_train/test and x_train/test
+        mergedDT                data table resuling from the merging of the mergedDT_train and mergedDT_test
+
+        mean.stdevDT            data table containing only the collumns related to mean and standard deviation of measures
+
+        averageDT               data table containing the averages of each collumn for each participant and each activity 
+        patient                 data table containing the information of mergdDTbt for a single patient
+        activity              data table containing the infomation of patien bu for a single activity
